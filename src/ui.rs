@@ -1,11 +1,11 @@
-use sdl2::render::Canvas;
-use sdl2::video::Window;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
+use sdl2::render::Canvas;
+use sdl2::video::Window;
 
 use crate::game;
 
-pub fn draw(game : &game::Game, canvas : &mut Canvas<Window>) -> Result<(), String> {
+pub fn draw(game: &game::Game, canvas: &mut Canvas<Window>) -> Result<(), String> {
     let (_width, _height) = canvas.output_size()?;
 
     let i = game.frame();
@@ -20,7 +20,7 @@ pub fn draw(game : &game::Game, canvas : &mut Canvas<Window>) -> Result<(), Stri
     Ok(())
 }
 
-fn overlay(_game : &game::Game, canvas : &mut Canvas<Window>) -> Result<(), String> {
+fn overlay(_game: &game::Game, canvas: &mut Canvas<Window>) -> Result<(), String> {
     let (_width, _height) = canvas.output_size()?;
     Ok(())
 }
