@@ -26,9 +26,7 @@ fn run_game() -> Result<(), String> {
 
     let texture_creator = canvas.texture_creator();
     texture_creator.default_pixel_format();
-    let mut texture = texture_creator.load_texture(std::path::Path::new(
-        "/home/gelos/garbage/rust-sdl2-template/assets/stars.png",
-    ))?;
+    let mut texture = texture_creator.load_texture_bytes(include_bytes!("assets/stars.png"))?;
     texture.set_blend_mode(sdl2::render::BlendMode::Blend);
 
     let mut game = game::Game::new();
