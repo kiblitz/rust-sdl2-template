@@ -1,7 +1,9 @@
+use crate::input::EventType;
+
+use std::error::Error;
 use std::num::Wrapping;
 use std::time::Duration;
 
-use crate::input::EventType;
 use sdl2::keyboard::Keycode::Down;
 use sdl2::keyboard::Keycode::Escape;
 use sdl2::keyboard::Keycode::Left;
@@ -39,7 +41,7 @@ impl Game {
         events: &mut Vec<EventType>,
         _delta_time: &Duration,
         exit: &mut bool,
-    ) -> Result<(), String> {
+    ) -> Result<(), Box<dyn Error>> {
         for event in events {
             match event {
                 EventType::KeyDown {

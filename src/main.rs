@@ -1,14 +1,16 @@
 extern crate sdl2;
 
-use sdl2::event::Event;
-use sdl2::image::LoadTexture;
-use std::time::{Duration, SystemTime};
-
 mod game;
 mod input;
 mod ui;
 
-fn run_game() -> Result<(), String> {
+use std::error::Error;
+use std::time::{Duration, SystemTime};
+
+use sdl2::event::Event;
+use sdl2::image::LoadTexture;
+
+fn run_game() -> Result<(), Box<dyn Error>> {
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
 
@@ -83,7 +85,7 @@ fn run_game() -> Result<(), String> {
     Ok(())
 }
 
-pub fn main() -> Result<(), String> {
+pub fn main() -> Result<(), Box<dyn Error>> {
     let result = run_game();
     if let Err(ref _e) = result {
         // TODO handle error logging
