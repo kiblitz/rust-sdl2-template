@@ -44,15 +44,13 @@ impl Game {
     ) -> Result<(), Box<dyn Error>> {
         for event in events {
             match event {
+                // Escape AND windows key AND ctrl key
                 EventType::KeyDown {
                     keycode: Escape,
                     keymod,
                     ..
-                } => {
-                    // Windows key AND ctrl key
-                    if keymod.contains(Mod::LGUIMOD | Mod::LCTRLMOD) {
+                } if keymod.contains(Mod::LGUIMOD | Mod::LCTRLMOD) => {
                         *exit = true;
-                    }
                 }
                 EventType::KeyDown { keycode: Up, .. } => {
                     self.up_down = true;
