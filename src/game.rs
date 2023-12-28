@@ -36,12 +36,7 @@ impl Game {
         }
     }
 
-    pub fn update(
-        &mut self,
-        events: &mut Vec<EventType>,
-        _delta_time: &Duration,
-        exit: &mut bool,
-    ) -> Result<(), Box<dyn Error>> {
+    fn handle_events(&mut self, events: &mut Vec<EventType>, exit: &mut bool) {
         for event in events {
             match event {
                 // Escape AND windows key AND ctrl key
@@ -50,7 +45,7 @@ impl Game {
                     keymod,
                     ..
                 } if keymod.contains(Mod::LGUIMOD | Mod::LCTRLMOD) => {
-                        *exit = true;
+                    *exit = true;
                 }
                 EventType::KeyDown { keycode: Up, .. } => {
                     self.up_down = true;
@@ -79,6 +74,14 @@ impl Game {
                 _ => {}
             }
         }
+    }
+    pub fn update(
+        &mut self,
+        events: &mut Vec<EventType>,
+        _delta_time: &Duration,
+        exit: &mut bool,
+    ) -> Result<(), Box<dyn Error>> {
+        self.handle_events(events, exit);
         if self.up_down {
             self.y -= self.delta;
         }
