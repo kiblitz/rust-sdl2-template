@@ -4,12 +4,15 @@ use std::error::Error;
 use std::num::Wrapping;
 use std::time::Duration;
 
-use sdl2::keyboard::Keycode::Down;
-use sdl2::keyboard::Keycode::Escape;
-use sdl2::keyboard::Keycode::Left;
-use sdl2::keyboard::Keycode::Right;
-use sdl2::keyboard::Keycode::Up;
+use sdl2::keyboard::Keycode::{Down, Escape, Left, Right, Up};
+use sdl2::keyboard::Keycode::{A, D, S, W};
 use sdl2::keyboard::Mod;
+
+#[derive(Eq, PartialEq)]
+pub enum State {
+    Play,
+    Exit,
+}
 
 pub struct Game {
     frame: Wrapping<u8>,
@@ -36,7 +39,8 @@ impl Game {
         }
     }
 
-    fn handle_events(&mut self, events: &mut Vec<EventType>, exit: &mut bool) {
+    fn handle_events(&mut self, events: &Vec<EventType>) -> State {
+        let mut state = State::Play;
         for event in events {
             match event {
                 // Escape AND windows key AND ctrl key
@@ -45,43 +49,46 @@ impl Game {
                     keymod,
                     ..
                 } if keymod.contains(Mod::LGUIMOD | Mod::LCTRLMOD) => {
-                    *exit = true;
+                    state = State::Exit;
                 }
-                EventType::KeyDown { keycode: Up, .. } => {
+                EventType::KeyDown { keycode: Up, .. } | EventType::KeyDown { keycode: W, .. } => {
                     self.up_down = true;
                 }
-                EventType::KeyDown { keycode: Down, .. } => {
+                EventType::KeyDown { keycode: Down, .. }
+                | EventType::KeyDown { keycode: S, .. } => {
                     self.down_down = true;
                 }
-                EventType::KeyDown { keycode: Left, .. } => {
+                EventType::KeyDown { keycode: Left, .. }
+                | EventType::KeyDown { keycode: A, .. } => {
                     self.left_down = true;
                 }
-                EventType::KeyDown { keycode: Right, .. } => {
+                EventType::KeyDown { keycode: Right, .. }
+                | EventType::KeyDown { keycode: D, .. } => {
                     self.right_down = true;
                 }
-                EventType::KeyUp { keycode: Up, .. } => {
+                EventType::KeyUp { keycode: Up, .. } | EventType::KeyUp { keycode: W, .. } => {
                     self.up_down = false;
                 }
-                EventType::KeyUp { keycode: Down, .. } => {
+                EventType::KeyUp { keycode: Down, .. } | EventType::KeyUp { keycode: S, .. } => {
                     self.down_down = false;
                 }
-                EventType::KeyUp { keycode: Left, .. } => {
+                EventType::KeyUp { keycode: Left, .. } | EventType::KeyUp { keycode: A, .. } => {
                     self.left_down = false;
                 }
-                EventType::KeyUp { keycode: Right, .. } => {
+                EventType::KeyUp { keycode: Right, .. } | EventType::KeyUp { keycode: D, .. } => {
                     self.right_down = false;
                 }
                 _ => {}
             }
         }
+        state
     }
     pub fn update(
         &mut self,
-        events: &mut Vec<EventType>,
+        events: &Vec<EventType>,
         _delta_time: &Duration,
-        exit: &mut bool,
-    ) -> Result<(), Box<dyn Error>> {
-        self.handle_events(events, exit);
+    ) -> Result<State, Box<dyn Error>> {
+        let state = self.handle_events(&events);
         if self.up_down {
             self.y -= self.delta;
         }
@@ -95,7 +102,7 @@ impl Game {
             self.x += self.delta;
         }
         self.frame += Wrapping(1u8);
-        Ok(())
+        Ok(state)
     }
 
     pub fn frame(&self) -> u8 {

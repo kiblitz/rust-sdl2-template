@@ -32,7 +32,6 @@ fn run_game() -> Result<(), Box<dyn Error>> {
     texture.set_blend_mode(sdl2::render::BlendMode::Blend);
 
     let mut game = game::Game::new();
-    let mut exit = false;
     let mut events = Vec::new();
 
     let mut event_pump = sdl_context.event_pump().unwrap();
@@ -68,7 +67,7 @@ fn run_game() -> Result<(), Box<dyn Error>> {
         let delta_time = SystemTime::now()
             .duration_since(last_update_time)
             .map_err(|e| e.to_string())?;
-        game.update(&mut events, &delta_time, &mut exit)?;
+        let state = game.update(&events, &delta_time)?;
         last_update_time = SystemTime::now();
 
         ui::draw(&game, &mut canvas)?;
@@ -76,7 +75,7 @@ fn run_game() -> Result<(), Box<dyn Error>> {
         canvas.copy_ex(&texture, None, None, 0., None, false, false)?;
         canvas.present();
 
-        if exit {
+        if state == game::State::Exit {
             break 'running;
         }
         std::thread::sleep(Duration::new(0, 1_000_000_000u32 / refresh_rate));
