@@ -1,13 +1,15 @@
 extern crate sdl2;
 
+mod event_handler;
 mod game;
-mod input;
-mod ui;
+mod game_object;
+mod util;
+
+use game_object::{Drawable, Updatable};
 
 use std::error::Error;
-use std::time::{Duration, SystemTime};
+use std::time::SystemTime;
 
-use sdl2::event::Event;
 use sdl2::image::LoadTexture;
 
 fn run_game() -> Result<(), Box<dyn Error>> {
@@ -15,13 +17,12 @@ fn run_game() -> Result<(), Box<dyn Error>> {
     let video_subsystem = sdl_context.video().unwrap();
 
     let window = video_subsystem
-        .window("rust-sdl2 demo", 800, 600)
+        .window("dogfight", 800, 600)
         .fullscreen_desktop()
         .position_centered()
         .build()
         .unwrap();
 
-    let refresh_rate = window.display_mode()?.refresh_rate as u32;
     let mut last_update_time = SystemTime::now();
     let mut canvas = window.into_canvas().build().unwrap();
     canvas.default_pixel_format();
@@ -32,53 +33,28 @@ fn run_game() -> Result<(), Box<dyn Error>> {
     texture.set_blend_mode(sdl2::render::BlendMode::Blend);
 
     let mut game = game::Game::new();
-    let mut events = Vec::new();
+    let mut event_handler = event_handler::EventHandler::new();
 
     let mut event_pump = sdl_context.event_pump().unwrap();
     'running: loop {
-        events.clear();
         for event in event_pump.poll_iter() {
-            match event {
-                Event::Quit { .. } => break 'running,
-                Event::KeyDown {
-                    keycode: Some(keycode),
-                    keymod,
-                    repeat,
-                    ..
-                } => events.push(input::EventType::KeyDown {
-                    keycode,
-                    keymod,
-                    repeat,
-                }),
-                Event::KeyUp {
-                    keycode: Some(keycode),
-                    keymod,
-                    repeat,
-                    ..
-                } => events.push(input::EventType::KeyUp {
-                    keycode,
-                    keymod,
-                    repeat,
-                }),
-                _ => {}
+            if !event_handler.consume(&event) {
+                break 'running;
             }
         }
 
         let delta_time = SystemTime::now()
             .duration_since(last_update_time)
-            .map_err(|e| e.to_string())?;
-        let state = game.update(&events, &delta_time)?;
+            .map_err(|e| e.to_string())
+            .map(|duration| duration.as_secs_f32())?;
+        game.update(&event_handler, &delta_time)?;
+        game.draw(&mut canvas)?;
         last_update_time = SystemTime::now();
-
-        ui::draw(&game, &mut canvas)?;
 
         canvas.copy_ex(&texture, None, None, 0., None, false, false)?;
         canvas.present();
 
-        if state == game::State::Exit {
-            break 'running;
-        }
-        std::thread::sleep(Duration::new(0, 1_000_000_000u32 / refresh_rate));
+        std::thread::sleep(util::REFRESH_EVERY);
     }
 
     Ok(())

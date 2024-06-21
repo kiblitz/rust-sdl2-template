@@ -1,115 +1,88 @@
-use crate::input::EventType;
+use crate::event_handler::EventHandler;
+use crate::game_object::{Drawable, Updatable};
 
 use std::error::Error;
 use std::num::Wrapping;
-use std::time::Duration;
 
-use sdl2::keyboard::Keycode::{Down, Escape, Left, Right, Up};
-use sdl2::keyboard::Keycode::{A, D, S, W};
-use sdl2::keyboard::Mod;
-
-#[derive(Eq, PartialEq)]
-pub enum State {
-    Play,
-    Exit,
-}
+use sdl2::pixels::Color;
+use sdl2::rect::Rect;
+use sdl2::render::Canvas;
+use sdl2::video::Window;
 
 pub struct Game {
     frame: Wrapping<u8>,
-    x: i32,
-    y: i32,
-    delta: i32,
-    up_down: bool,
-    down_down: bool,
-    left_down: bool,
-    right_down: bool,
+    x: f32,
+    y: f32,
+    speed: f32,
 }
 
+impl Updatable for Game {
+    fn update(
+        &mut self,
+        event_handler: &EventHandler,
+        delta_time: &f32,
+    ) -> Result<(), Box<dyn Error>> {
+        if event_handler.up() {
+            self.y -= self.speed * delta_time;
+        }
+        if event_handler.down() {
+            self.y += self.speed * delta_time;
+        }
+        if event_handler.left() {
+            self.x -= self.speed * delta_time;
+        }
+        if event_handler.right() {
+            self.x += self.speed * delta_time;
+        }
+        self.frame += Wrapping(1u8);
+        Ok(())
+    }
+}
+impl Drawable for Game {
+    fn draw(&self, canvas: &mut Canvas<Window>) -> Result<(), Box<dyn Error>> {
+        let (_width, _height) = canvas.output_size()?;
+
+        let i = self.frame();
+        canvas.set_draw_color(Color::RGB(
+            if i < 128 { i } else { 255 - i },
+            64,
+            128 - if i < 128 { i } else { 255 - i },
+        ));
+        canvas.clear();
+
+        let (x, y) = self.pos();
+        let rect = Rect::new(x as i32, y as i32, 100, 100);
+        canvas.set_draw_color(Color::RGB(
+            if i < 128 { i } else { 255 - i },
+            x as u8,
+            y as u8,
+        ));
+
+        canvas.fill_rect(rect)?;
+        self.overlay(canvas)?;
+        Ok(())
+    }
+}
 impl Game {
     pub fn new() -> Self {
         Self {
             frame: Wrapping(0u8),
-            x: 0,
-            y: 0,
-            delta: 10,
-            up_down: false,
-            down_down: false,
-            left_down: false,
-            right_down: false,
+            x: 0.,
+            y: 0.,
+            speed: 500.,
         }
     }
 
-    fn handle_events(&mut self, events: &Vec<EventType>) -> State {
-        let mut state = State::Play;
-        for event in events {
-            match event {
-                // Escape AND windows key AND ctrl key
-                EventType::KeyDown {
-                    keycode: Escape,
-                    keymod,
-                    ..
-                } if keymod.contains(Mod::LGUIMOD | Mod::LCTRLMOD) => {
-                    state = State::Exit;
-                }
-                EventType::KeyDown { keycode: Up, .. } | EventType::KeyDown { keycode: W, .. } => {
-                    self.up_down = true;
-                }
-                EventType::KeyDown { keycode: Down, .. }
-                | EventType::KeyDown { keycode: S, .. } => {
-                    self.down_down = true;
-                }
-                EventType::KeyDown { keycode: Left, .. }
-                | EventType::KeyDown { keycode: A, .. } => {
-                    self.left_down = true;
-                }
-                EventType::KeyDown { keycode: Right, .. }
-                | EventType::KeyDown { keycode: D, .. } => {
-                    self.right_down = true;
-                }
-                EventType::KeyUp { keycode: Up, .. } | EventType::KeyUp { keycode: W, .. } => {
-                    self.up_down = false;
-                }
-                EventType::KeyUp { keycode: Down, .. } | EventType::KeyUp { keycode: S, .. } => {
-                    self.down_down = false;
-                }
-                EventType::KeyUp { keycode: Left, .. } | EventType::KeyUp { keycode: A, .. } => {
-                    self.left_down = false;
-                }
-                EventType::KeyUp { keycode: Right, .. } | EventType::KeyUp { keycode: D, .. } => {
-                    self.right_down = false;
-                }
-                _ => {}
-            }
-        }
-        state
-    }
-    pub fn update(
-        &mut self,
-        events: &Vec<EventType>,
-        _delta_time: &Duration,
-    ) -> Result<State, Box<dyn Error>> {
-        let state = self.handle_events(&events);
-        if self.up_down {
-            self.y -= self.delta;
-        }
-        if self.down_down {
-            self.y += self.delta;
-        }
-        if self.left_down {
-            self.x -= self.delta;
-        }
-        if self.right_down {
-            self.x += self.delta;
-        }
-        self.frame += Wrapping(1u8);
-        Ok(state)
+    fn overlay(&self, canvas: &mut Canvas<Window>) -> Result<(), Box<dyn Error>> {
+        let (_width, _height) = canvas.output_size()?;
+        Ok(())
     }
 
     pub fn frame(&self) -> u8 {
         self.frame.0
     }
 
-    pub fn pos(&self) -> (i32, i32) {
+    pub fn pos(&self) -> (f32, f32) {
         (self.x, self.y)
     }
 }
