@@ -1,6 +1,7 @@
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 
+#[derive(derive_getters::Getters)]
 pub struct EventHandler {
     up: bool,
     down: bool,
@@ -49,18 +50,5 @@ impl EventHandler {
             }
             _ => true,
         }
-    }
-
-    pub fn up(&self) -> bool {
-        return self.up;
-    }
-    pub fn down(&self) -> bool {
-        return self.down;
-    }
-    pub fn left(&self) -> bool {
-        return self.left;
-    }
-    pub fn right(&self) -> bool {
-        return self.right;
     }
 }
