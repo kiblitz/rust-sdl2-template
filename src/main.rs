@@ -1,12 +1,12 @@
 extern crate sdl2;
 
+mod camera;
 mod event_handler;
 mod game;
+mod game_event;
 mod game_object;
 mod texture_handler;
 mod util;
-
-use game_object::{Drawable, Updatable};
 
 use std::error::Error;
 use std::time::SystemTime;
@@ -23,14 +23,13 @@ fn run_game() -> Result<(), Box<dyn Error>> {
         .unwrap();
 
     let mut last_update_time = SystemTime::now();
-    let mut canvas = window.into_canvas().build().unwrap();
-    canvas.default_pixel_format();
+    let canvas = window.into_canvas().build().unwrap();
 
     let texture_creator = canvas.texture_creator();
     texture_creator.default_pixel_format();
     let texture_handler = texture_handler::TextureHandler::new(&texture_creator)?;
 
-    let mut game = game::Game::new(&texture_handler);
+    let mut game = game::Game::new(canvas, &texture_handler);
     let mut event_handler = event_handler::EventHandler::new();
 
     let mut event_pump = sdl_context.event_pump().unwrap();
@@ -45,11 +44,9 @@ fn run_game() -> Result<(), Box<dyn Error>> {
             .duration_since(last_update_time)
             .map_err(|e| e.to_string())
             .map(|duration| duration.as_secs_f32())?;
-        game.update(&event_handler, &delta_time)?;
-        game.draw(&mut canvas)?;
+        game.update(&texture_handler, &event_handler, delta_time)?;
+        game.draw()?;
         last_update_time = SystemTime::now();
-
-        canvas.present();
 
         std::thread::sleep(util::REFRESH_EVERY);
     }
